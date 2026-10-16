@@ -169,7 +169,6 @@ private:
 	bool resourceLoadGenerationStarting = false;
 	ResourceLoadGenerationPtr activeResourceLoadGeneration;
 
-	void QueueTextureLoad(const ref_texture& texture);
 	void ResolveTextureSource(LPCSTR name, LPCSTR canonical_level_path, TextureSourceInfo& result);
 	void CompleteTextureLoad(const ResourceLoadGenerationPtr& generation);
 	void RecordTextureLoadFailure(const ResourceLoadGenerationPtr& generation, std::exception_ptr failure);
@@ -177,6 +176,8 @@ private:
 	std::exception_ptr WaitForTextureLoadGeneration(const ResourceLoadGenerationPtr& generation);
 
 public:
+	// CTexture reuses this lifetime-owning queue for evicted-texture reloads.
+	void QueueTextureLoad(const ref_texture& texture);
 	CTextureDescrMngr m_textures_description;
 	xr_vector<std::pair<shared_str, R_constant_setup*>> v_constant_setup;
 	lua_State* LSVM;

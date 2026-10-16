@@ -3,6 +3,10 @@ name: Experimental MT compile check
 on:
   push:
     branches: [experimental/pr614-oct11]
+    paths:
+      - src/**
+      - tests/**
+      - .github/workflows/load-transition-build.yml
   workflow_dispatch:
     inputs:
       configuration:

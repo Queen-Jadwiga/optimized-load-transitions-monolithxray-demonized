@@ -34,7 +34,11 @@ Original authorship and merge ancestry are retained.
 The three Python log-analysis tests pass locally. The Windows workflow additionally
 tests actual executor lifecycle behavior with PPL: nested batches, exception
 propagation/recovery, cancellation joining active captures, and stale-generation
-rejection/replacement. Windows compilation and runtime validation are pending. No measured performance improvement is claimed. The PR
+rejection/replacement. Windows executor tests passed on commit `ec0f2798d9a972a83f93c08d50a0d430fd3d57e3`
+([run 2](https://github.com/Queen-Jadwiga/optimized-load-transitions-monolithxray-demonized/actions/runs/38966012260)).
+The first full build caught a private queue method accessed by the new reload
+path; its declaration is now public. Full compilation and runtime validation
+remain pending. No measured performance improvement is claimed. The PR
 is a large experimental change: integration does not establish thread safety.
 
 Automatic builds of this experimental branch target DX11-AVX, with compile logs,
