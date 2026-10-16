@@ -2,7 +2,9 @@
 
 Experimental engine work for faster startup, save loading, and level transitions in S.T.A.L.K.E.R. Anomaly/GAMMA. The goal is to preserve installed gameplay mods, save compatibility, and ordered Lua/object lifecycle behavior.
 
-**Experimental branch: PR #614 is integrated with October 11 compatibility corrections. The Windows DX11-AVX build and executor lifecycle tests passed; runtime stability and performance remain unverified.**
+**Combined branch: native DLSS/FSR 0.5 is integrated for compilation and testing; see [combined instructions](docs/load-transitions/COMBINED_TEST.md) and [integration notes](docs/load-transitions/UPSCALING_INTEGRATION.md).**
+
+**Load-only experimental branch: PR #614 is integrated with October 11 compatibility corrections. The Windows DX11-AVX build and executor lifecycle tests passed; runtime stability and performance remain unverified.**
 
 This repository starts from themrdemonized's October 11, 2026 MT branch. It retains the engine source, history, original license, and third-party notices. The unmodified upstream README is preserved at [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).
 
@@ -10,6 +12,7 @@ This repository starts from themrdemonized's October 11, 2026 MT branch. It reta
 
 | Branch | Purpose |
 |---|---|
+| `experimental/pr614-upscaling-oct11` | Loading improvements plus brodrigz/bepis native DLSS/FSR 0.5, runtime unverified |
 | `experimental/pr614-oct11` | PR #614 integration, compatibility corrections, and Windows lifecycle tests |
 | `main` | October 11 MT source plus project documentation and benchmark tooling; engine behavior unchanged |
 | `upstream/oct11-mt` | Exact upstream MT baseline `871e2491228a64f0d5e257c7a7e0255feb841ac8` |

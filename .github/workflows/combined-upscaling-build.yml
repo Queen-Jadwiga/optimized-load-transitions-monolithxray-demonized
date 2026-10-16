@@ -1,0 +1,131 @@
+name: Combined loading and native upscaling test
+
+on:
+  push:
+    branches: [experimental/pr614-upscaling-oct11]
+    paths:
+      - src/**
+      - sdk/**
+      - extras/**
+      - gamedata/**
+      - tools/**
+      - tests/**
+      - .github/workflows/combined-upscaling-build.yml
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Windows x64 build configuration
+        required: true
+        default: DX11-AVX
+        type: choice
+        options: [DX11, DX11-AVX]
+
+permissions:
+  contents: read
+
+jobs:
+  tooling-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - name: Check portable temporal contract
+        run: |
+          g++ -std=c++17 -Wall -Wextra -O2 tools/dlss/temporal_test.cpp -o /tmp/temporal_test
+          /tmp/temporal_test
+      - name: Check compatibility installer sources
+        run: python tools/package_combined_upscaling.py --output _build/compatibility-check
+
+  compile:
+    needs: tooling-tests
+    runs-on: windows-2022
+    timeout-minutes: 90
+    env:
+      BUILD_CONFIGURATION: ${{ inputs.configuration || 'DX11-AVX' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x64
+      - name: Record source and target
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build-record | Out-Null
+          git rev-parse HEAD | Set-Content build-record/commit.txt
+          $env:BUILD_CONFIGURATION | Set-Content build-record/configuration.txt
+          'Combined Test 1; game runtime, RTX evaluation and performance unverified.' | Set-Content build-record/STATUS.txt
+          Copy-Item License.txt build-record/License.txt
+      - name: Test native executor lifecycle with Windows PPL
+        timeout-minutes: 5
+        shell: cmd
+        run: |
+          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x64
+          if errorlevel 1 exit /b 1
+          cl /nologo /std:c++17 /EHsc /W4 tests\native_load_executor.cpp /Fe:build-record\native_load_executor.exe
+          if errorlevel 1 exit /b 1
+          build-record\native_load_executor.exe > build-record\native-executor-tests.txt 2>&1
+          if errorlevel 1 (type build-record\native-executor-tests.txt & exit /b 1)
+          type build-record\native-executor-tests.txt
+      - name: Test temporal contract and D3D11 WARP renderer paths
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          foreach ($test in @('temporal', 'sampler', 'sharpen', 'pda_depth')) {
+            & msbuild "tools/dlss/${test}_test.vcxproj" /p:Configuration=Release /p:Platform=x64 /nologo "/flp:logfile=build-record/${test}-build.log;verbosity=minimal"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            & "_build/dlss_tests/${test}_test.exe" 2>&1 | Tee-Object "build-record/${test}-tests.txt"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Compile coherent combined MT solution
+        shell: pwsh
+        run: |
+          & msbuild src/engine-vs2022.sln /m:2 "/p:Configuration=$env:BUILD_CONFIGURATION" /p:Platform=x64 /bl:build-record/msbuild.binlog
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test options UI with the engine Lua library
+        shell: pwsh
+        run: |
+          $luaConfiguration = if ($env:BUILD_CONFIGURATION -eq 'DX11-AVX') { 'Release-AVX' } else { 'Release' }
+          & msbuild tools/dlss/lua_runner.vcxproj /p:Configuration=Release /p:Platform=x64 "/p:EngineLuaConfiguration=$luaConfiguration" /nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & _build/dlss_tests/lua_runner.exe tools/dlss/ui_test.lua 2>&1 | Tee-Object build-record/options-ui-tests.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Retrieve and verify pinned NVIDIA release runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force _build/runtime | Out-Null
+          Invoke-WebRequest 'https://raw.githubusercontent.com/NVIDIA/DLSS/v310.9.1/lib/Windows_x86_64/rel/nvngx_dlss.dll' -OutFile _build/runtime/nvngx_dlss.dll
+          $hash = (Get-FileHash _build/runtime/nvngx_dlss.dll -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '3975567b8943c53acce397f2b72380092f84f162d00b0d2c7d08a1025c563983') { throw 'NVIDIA runtime checksum mismatch' }
+          Get-AuthenticodeSignature _build/runtime/nvngx_dlss.dll | Format-List | Out-File build-record/runtime-signature.txt
+      - name: Package combined executable and shader installer
+        shell: pwsh
+        run: |
+          python tools/package_combined_upscaling.py --output _build/combined-delivery --configuration $env:BUILD_CONFIGURATION --runtime _build/runtime/nvngx_dlss.dll
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item _build/combined-delivery/SHA256SUMS.txt build-record/SHA256SUMS.txt
+          Copy-Item _build/combined-delivery/binary-package/PROVENANCE.json build-record/PROVENANCE.json
+      - name: Preserve compile and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-compile-record-${{ inputs.configuration || 'DX11-AVX' }}
+          path: build-record/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve combined test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-test1-${{ inputs.configuration || 'DX11-AVX' }}
+          path: |
+            _build/combined-delivery/*.zip
+            _build/combined-delivery/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

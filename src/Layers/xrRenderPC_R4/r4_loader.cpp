@@ -572,6 +572,9 @@ void CRender::level_InvalidateStaticCache()
 
 void CRender::level_BeginAsyncLoad()
 {
+	// A cached map can reuse similar camera coordinates. Never carry temporal
+	// history across a load, even when precache skips full world rendering.
+	dlss::EndScene(true);
 	DiscardPreparedVisuals();
 	m_level_shader_descriptions.clear();
 	m_level_shader_cpp_results.clear();
