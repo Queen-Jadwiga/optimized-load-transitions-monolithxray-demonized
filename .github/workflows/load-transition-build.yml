@@ -1,0 +1,80 @@
+name: Experimental MT compile check
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Windows x64 build configuration
+        required: true
+        default: DX11-AVX
+        type: choice
+        options:
+          - DX11
+          - DX11-AVX
+
+permissions:
+  contents: read
+
+jobs:
+  tooling-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+
+  compile:
+    needs: tooling-tests
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x64
+      - name: Record source and target
+        shell: pwsh
+        env:
+          BUILD_CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          New-Item -ItemType Directory -Force build-record | Out-Null
+          git rev-parse HEAD | Set-Content build-record/commit.txt
+          $env:BUILD_CONFIGURATION | Set-Content build-record/configuration.txt
+          'Compile artifact only; runtime and performance unverified.' | Set-Content build-record/STATUS.txt
+          Copy-Item License.txt build-record/License.txt
+      - name: Compile coherent MT solution
+        shell: pwsh
+        env:
+          BUILD_CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          & msbuild src/engine-vs2022.sln /m:2 "/p:Configuration=$env:BUILD_CONFIGURATION" /p:Platform=x64 /bl:build-record/msbuild.binlog
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Record executable hashes
+        shell: pwsh
+        run: |
+          $executables = Get-ChildItem _build/_game/bin_dbg -Filter *.exe
+          if (-not $executables) { throw 'Build produced no executable.' }
+          $executables | Get-FileHash -Algorithm SHA256 | Format-List | Out-File build-record/SHA256.txt
+      - name: Preserve compile record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-record-${{ inputs.configuration }}
+          path: build-record/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve experimental binaries and symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: unverified-mt-${{ inputs.configuration }}
+          path: |
+            _build/_game/bin_dbg/*.exe
+            _build/_game/bin_dbg/*.dll
+            _build/_game/bin_dbg/*.pdb
+            License.txt
+          if-no-files-found: error
+          retention-days: 14
