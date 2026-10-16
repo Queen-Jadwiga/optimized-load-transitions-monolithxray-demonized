@@ -71,6 +71,7 @@ static void bus_textures_update()
 		_RELEASE(surface);
 	}
 }
+#include "../../xrCore/ShaderSourceCRC.h"
 
 dxRenderDeviceRender::dxRenderDeviceRender()
 	: Resources(0)
@@ -224,11 +225,17 @@ void dxRenderDeviceRender::SetupStates()
 
 void dxRenderDeviceRender::OnDeviceCreate(LPCSTR shName)
 {
+	CTimer startupTimer;
+	startupTimer.Start();
+
 	// Signal everyone - device created
 	RCache.OnDeviceCreate();
 	m_Gamma.Update();
+	const u32 backendMs = startupTimer.GetElapsed_ms();
 	Resources->OnDeviceCreate(shName);
+	const u32 resourcesMs = startupTimer.GetElapsed_ms() - backendMs;
 	::Render->create();
+	const u32 rendererMs = startupTimer.GetElapsed_ms() - backendMs - resourcesMs;
 	Device.Statistic->OnDeviceCreate();
 
 	//#ifndef DEDICATED_SERVER
@@ -240,12 +247,18 @@ void dxRenderDeviceRender::OnDeviceCreate(LPCSTR shName)
 		DUImpl.OnDeviceCreate();
 	}
 	//#endif
+	const u32 utilitiesMs = startupTimer.GetElapsed_ms() - backendMs - resourcesMs - rendererMs;
+	Msg("* [STARTUP/RENDER CREATE] backend=%u resources=%u renderer=%u utilities=%u total=%u ms",
+		backendMs, resourcesMs, rendererMs, utilitiesMs, startupTimer.GetElapsed_ms());
 }
 
 void dxRenderDeviceRender::Create(HWND hWnd, u32& dwWidth, u32& dwHeight, float& fWidth_2, float& fHeight_2,
                                   bool move_window)
 {
+	CTimer startupTimer;
+	startupTimer.Start();
 	HW.CreateDevice(hWnd, move_window);
+	const u32 hardwareMs = startupTimer.GetElapsed_ms();
 #if defined(USE_DX11)
 	dwWidth = HW.m_ChainDesc.Width;
 	dwHeight = HW.m_ChainDesc.Height;
@@ -259,6 +272,8 @@ void dxRenderDeviceRender::Create(HWND hWnd, u32& dwWidth, u32& dwHeight, float&
 	fWidth_2 = float(dwWidth / 2);
 	fHeight_2 = float(dwHeight / 2);
 	Resources = xr_new<CResourceManager>();
+	Msg("* [STARTUP/RENDER DEVICE] hardware=%u manager=%u total=%u ms", hardwareMs,
+		startupTimer.GetElapsed_ms() - hardwareMs, startupTimer.GetElapsed_ms());
 }
 
 void dxRenderDeviceRender::SetupGPU(BOOL bForceGPU_SW, BOOL bForceGPU_NonPure, BOOL bForceGPU_REF)
@@ -340,6 +355,11 @@ void dxRenderDeviceRender::DeferredLoad(BOOL E)
 	Resources->DeferredLoad(E);
 }
 
+void dxRenderDeviceRender::ResourcesPrepareLoad()
+{
+	Resources->PrepareLoad();
+}
+
 void dxRenderDeviceRender::ResourcesDeferredUpload()
 {
 	Resources->DeferredUpload();
@@ -350,9 +370,24 @@ void dxRenderDeviceRender::ResourcesDeferredUnload()
 	Resources->DeferredUnload();
 }
 
-void dxRenderDeviceRender::ResourcesPrefetchCreateTexture(LPCSTR name)
+void dxRenderDeviceRender::ResourcesPrefetchCreateTexture(LPCSTR name, LPCSTR canonical_level_path)
 {
-	Resources->_CreateTexture(name);
+	Resources->PrefetchTexture(name, canonical_level_path);
+}
+
+u64 dxRenderDeviceRender::ResourcesBeginLoadGeneration()
+{
+	return Resources->BeginLoadGeneration();
+}
+
+void dxRenderDeviceRender::ResourcesAbortLoadGeneration(u64 generation)
+{
+	Resources->AbortLoadGeneration(generation);
+}
+
+void dxRenderDeviceRender::ResourcesFinalizeLoadGeneration(u64 generation)
+{
+	Resources->FinalizeLoadGeneration(generation);
 }
 
 xrCriticalSection resources_lock;
@@ -496,6 +531,9 @@ void dxRenderDeviceRender::End()
 
 void dxRenderDeviceRender::ResourcesDestroyNecessaryTextures()
 {
+	// The last precache frame is the hard end of the active load generation:
+	// no first-use texture work may leak into interactive gameplay.
+	Resources->WaitForTextureLoads();
 	Resources->DestroyNecessaryTextures();
 }
 
@@ -530,6 +568,12 @@ bool dxRenderDeviceRender::HWSupportsShaderYUV2RGB()
 
 void dxRenderDeviceRender::OnAssetsChanged()
 {
+	Resources->WaitForTextureLoads();
+	Resources->InvalidateTextureSourceCache();
+	Resources->InvalidateLevelShaderCache();
+	clearShaderSourceCrcCache();
+	::Render->level_InvalidateStaticCache();
+	::Render->models_InvalidatePrepared();
 	Resources->m_textures_description.UnLoad();
 	Resources->m_textures_description.Load();
 }

@@ -1,6 +1,8 @@
 name: Experimental MT compile check
 
 on:
+  push:
+    branches: [experimental/pr614-oct11]
   workflow_dispatch:
     inputs:
       configuration:
@@ -39,7 +41,7 @@ jobs:
       - name: Record source and target
         shell: pwsh
         env:
-          BUILD_CONFIGURATION: ${{ inputs.configuration }}
+          BUILD_CONFIGURATION: ${{ inputs.configuration || 'DX11-AVX' }}
         run: |
           New-Item -ItemType Directory -Force build-record | Out-Null
           git rev-parse HEAD | Set-Content build-record/commit.txt
@@ -49,7 +51,7 @@ jobs:
       - name: Compile coherent MT solution
         shell: pwsh
         env:
-          BUILD_CONFIGURATION: ${{ inputs.configuration }}
+          BUILD_CONFIGURATION: ${{ inputs.configuration || 'DX11-AVX' }}
         run: |
           & msbuild src/engine-vs2022.sln /m:2 "/p:Configuration=$env:BUILD_CONFIGURATION" /p:Platform=x64 /bl:build-record/msbuild.binlog
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -63,14 +65,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: compile-record-${{ inputs.configuration }}
+          name: compile-record-${{ inputs.configuration || 'DX11-AVX' }}
           path: build-record/
           if-no-files-found: error
           retention-days: 14
       - name: Preserve experimental binaries and symbols
         uses: actions/upload-artifact@v4
         with:
-          name: unverified-mt-${{ inputs.configuration }}
+          name: unverified-mt-${{ inputs.configuration || 'DX11-AVX' }}
           path: |
             _build/_game/bin_dbg/*.exe
             _build/_game/bin_dbg/*.dll

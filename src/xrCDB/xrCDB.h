@@ -109,6 +109,7 @@ namespace CDB
 		void build_tree();
 		void build_internal(Fvector* V, int Vcnt, TRI* T, int Tcnt, build_callback* bc = NULL, void* bcp = NULL);
 		void build(Fvector* V, int Vcnt, TRI* T, int Tcnt, build_callback* bc = NULL, void* bcp = NULL);
+		void swap(MODEL& other);
 		u32 memory();
 	};
 
