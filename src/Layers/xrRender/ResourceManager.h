@@ -207,7 +207,7 @@ public:
 
 	// Low level resource creation
 	ref_texture _CreateTexture(LPCSTR Name, bool prefetch = false, LPCSTR canonical_level_path = nullptr);
-	CTexture* _FindTexture(LPCSTR Name);
+	ref_texture _FindTexture(LPCSTR Name);
 	void _DeleteTexture(const CTexture* T);
 	void PrefetchTexture(LPCSTR Name, LPCSTR canonical_level_path = nullptr);
 	void InvalidateTextureSourceCache();

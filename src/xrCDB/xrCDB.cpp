@@ -68,8 +68,8 @@ void MODEL::swap(MODEL& other)
 	syncronize();
 	other.syncronize();
 	std::swap(tree, other.tree);
-	const bool this_status = status.load(std::memory_order_acquire);
-	const bool other_status = other.status.load(std::memory_order_acquire);
+	const u32 this_status = status.load(std::memory_order_acquire);
+	const u32 other_status = other.status.load(std::memory_order_acquire);
 	status.store(other_status, std::memory_order_release);
 	other.status.store(this_status, std::memory_order_release);
 	std::swap(tris, other.tris);

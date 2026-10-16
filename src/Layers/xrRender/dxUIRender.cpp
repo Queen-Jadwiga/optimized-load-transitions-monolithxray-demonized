@@ -164,8 +164,8 @@ bool dxUIRender::GetTextureResolution(LPCSTR name, Fvector2& res)
 {
 	res.set(0.f, 0.f);
 
-	CTexture* T = DEV->_FindTexture(name);
-	if (!T || !T->flags.bLoaded) return false;
+	ref_texture T = DEV->_FindTexture(name);
+	if (!T || !T->is_loaded()) return false;
 
 	u32 w = T->get_Width();
 	u32 h = T->get_Height();

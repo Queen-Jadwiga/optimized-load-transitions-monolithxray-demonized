@@ -1,5 +1,7 @@
 # PR #614 initial compatibility review — 2026-10-16
 
+This is the historical pre-integration review. See [PR614_INTEGRATION.md](PR614_INTEGRATION.md) for subsequent experimental work.
+
 ## Decision
 
 Preserve the original PR as a reference; do not merge or label it tested on October 11 MT yet. Git's three-way merge reports nine conflicted files. This is a compatibility review and a focused reading of loading/caching/measurement code, not an exhaustive concurrency audit of all 144 changed files.

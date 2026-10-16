@@ -48,6 +48,17 @@ jobs:
           $env:BUILD_CONFIGURATION | Set-Content build-record/configuration.txt
           'Compile artifact only; runtime and performance unverified.' | Set-Content build-record/STATUS.txt
           Copy-Item License.txt build-record/License.txt
+      - name: Test native executor lifecycle with Windows PPL
+        timeout-minutes: 5
+        shell: cmd
+        run: |
+          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x64
+          if errorlevel 1 exit /b 1
+          cl /nologo /std:c++17 /EHsc /W4 tests\native_load_executor.cpp /Fe:build-record\native_load_executor.exe
+          if errorlevel 1 exit /b 1
+          build-record\native_load_executor.exe > build-record\native-executor-tests.txt 2>&1
+          if errorlevel 1 (type build-record\native-executor-tests.txt & exit /b 1)
+          type build-record\native-executor-tests.txt
       - name: Compile coherent MT solution
         shell: pwsh
         env:

@@ -954,18 +954,33 @@ void CResourceManager::_DeleteTexture(const CTexture* T)
 	Msg("! ERROR: Failed to find texture surface '%s'", *T->cName);
 }
 
-CTexture* CResourceManager::_FindTexture(LPCSTR _Name)
+ref_texture CResourceManager::_FindTexture(LPCSTR _Name)
 {
-	if (!_Name || !_Name[0]) return 0;
-	if (0 == xr_strcmp(_Name, "null")) return 0;
+	if (!_Name || !_Name[0] || 0 == xr_strcmp(_Name, "null"))
+		return ref_texture();
 
 	string_path Name;
 	xr_strcpy(Name, _Name);
 	fix_texture_name(Name);
+	LPCSTR canonical_level_path = g_resource_level_path_override.empty()
+		? nullptr : g_resource_level_path_override.c_str();
+	TextureSourceInfo source;
+	ResolveTextureSource(Name, canonical_level_path, source);
+
+	// Match _CreateTexture's level-qualified key without creating a texture.
+	xr_string registryName = Name;
+	if (source.levelLocal)
+	{
+		string128 identity;
+		xr_sprintf(identity, "\n@level:%08x:%08x:%08x:%08x:", source.crc, source.sizeReal,
+			source.sizeCompressed, source.modified);
+		registryName += identity;
+		registryName += source.resolvedPath;
+	}
 
 	xrCriticalSectionGuard guard(creationGuard);
-	map_TextureIt I = m_textures.find(LPSTR(Name));
-	return I != m_textures.end() ? I->second : 0;
+	map_TextureIt I = m_textures.find(registryName.c_str());
+	return I != m_textures.end() ? ref_texture(I->second) : ref_texture();
 }
 
 #ifdef DEBUG

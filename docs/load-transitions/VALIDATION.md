@@ -4,7 +4,7 @@
 
 Use the pinned upstream MT baseline and a separately named candidate commit. Record configuration, compiler/toolset, binary hashes and relevant console settings. Keep the same GAMMA/MO2 profile, installed mods, saves, driver, renderer and graphics settings. Avoid changing the mod list between the paired runs.
 
-Build the same Windows x64 DX11 or DX11-AVX configuration for both revisions. The current manual workflow is only a build scaffold; it has not yet run and may require adapting upstream SDK/toolchain dependencies. The local development environment is Linux and cannot validate the Windows engine binary. Preserve PDBs for crashes. Include upstream notices with any distributed binaries.
+Build the same Windows x64 DX11 or DX11-AVX configuration for both revisions. The experimental branch runs a Windows compile workflow; inspect the latest run and exact commit before treating compilation as verified. It includes standalone tests against the actual PPL executor header for nested batches, failure recovery, cancellation joins, and generation replacement. These do not test D3D ownership or prove game compatibility. The local development environment is Linux and cannot validate the Windows engine binary. Preserve PDBs for crashes. Include upstream notices with any distributed binaries.
 
 ## Performance scenarios
 

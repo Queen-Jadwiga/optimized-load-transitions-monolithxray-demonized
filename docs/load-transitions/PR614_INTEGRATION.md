@@ -20,10 +20,21 @@ Original authorship and merge ancestry are retained.
   worker, which conflicts with the newer lifetime fix.
 - Retain RenderDoc initialization alongside new startup timing output.
 
+## Additional compatibility corrections
+
+- Preserve the full collision model status when swapping cached models. The
+  newer baseline uses three integer states; the PR's Boolean temporary would
+  collapse a failed/building state into initialized.
+- Match non-creating texture lookups to the PR's level-qualified texture keys,
+  and retain an owning reference while UI code reads texture dimensions. Read
+  the atomic load state rather than the legacy packed flag.
+
 ## Verification
 
-The three Python log-analysis tests pass locally. Windows compilation and runtime
-validation are pending. No measured performance improvement is claimed. The PR
+The three Python log-analysis tests pass locally. The Windows workflow additionally
+tests actual executor lifecycle behavior with PPL: nested batches, exception
+propagation/recovery, cancellation joining active captures, and stale-generation
+rejection/replacement. Windows compilation and runtime validation are pending. No measured performance improvement is claimed. The PR
 is a large experimental change: integration does not establish thread safety.
 
 Automatic builds of this experimental branch target DX11-AVX, with compile logs,

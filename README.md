@@ -2,7 +2,7 @@
 
 Experimental engine work for faster startup, save loading, and level transitions in S.T.A.L.K.E.R. Anomaly/GAMMA. The goal is to preserve installed gameplay mods, save compatibility, and ordered Lua/object lifecycle behavior.
 
-**Current status: source baseline and initial PR review. No improved executable has been built or benchmarked by this project.**
+**Experimental branch: PR #614 is integrated with October 11 compatibility corrections. Windows build validation is in progress; runtime stability and performance remain unverified.**
 
 This repository starts from themrdemonized's October 11, 2026 MT branch. It retains the engine source, history, original license, and third-party notices. The unmodified upstream README is preserved at [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).
 
@@ -10,13 +10,14 @@ This repository starts from themrdemonized's October 11, 2026 MT branch. It reta
 
 | Branch | Purpose |
 |---|---|
+| `experimental/pr614-oct11` | PR #614 integration, compatibility corrections, and Windows lifecycle tests |
 | `main` | October 11 MT source plus project documentation and benchmark tooling; engine behavior unchanged |
 | `upstream/oct11-mt` | Exact upstream MT baseline `871e2491228a64f0d5e257c7a7e0255feb841ac8` |
 | `reference/pr-614` | Unmodified PR #614 head `8b3d9be9935f7f0aa2a315678977882a03cb64de`, credited to qkff99 |
 
 The original PR is [MT/R4: parallel level loading and faster startup](https://github.com/themrdemonized/xray-monolith/pull/614). Its code is not merged into `main`: a three-way integration with the pinned MT baseline conflicts in nine files. Preservation on a reference branch is not compatibility certification.
 
-Read the [initial review](docs/load-transitions/PR614_REVIEW.md), [source provenance](docs/load-transitions/SOURCES.json), and [validation plan](docs/load-transitions/VALIDATION.md).
+Read the [integration notes](docs/load-transitions/PR614_INTEGRATION.md), [initial review](docs/load-transitions/PR614_REVIEW.md), [source provenance](docs/load-transitions/SOURCES.json), and [validation plan](docs/load-transitions/VALIDATION.md).
 
 ## Approach
 
