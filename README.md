@@ -2,7 +2,7 @@
 
 Experimental engine work for faster startup, save loading, and level transitions in S.T.A.L.K.E.R. Anomaly/GAMMA. The goal is to preserve installed gameplay mods, save compatibility, and ordered Lua/object lifecycle behavior.
 
-**Experimental branch: PR #614 is integrated with October 11 compatibility corrections. Windows build validation is in progress; runtime stability and performance remain unverified.**
+**Experimental branch: PR #614 is integrated with October 11 compatibility corrections. The Windows DX11-AVX build and executor lifecycle tests passed; runtime stability and performance remain unverified.**
 
 This repository starts from themrdemonized's October 11, 2026 MT branch. It retains the engine source, history, original license, and third-party notices. The unmodified upstream README is preserved at [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).
 
@@ -27,7 +27,7 @@ Read the [integration notes](docs/load-transitions/PR614_INTEGRATION.md), [initi
 4. Verify failure, cancellation, shutdown, device reset, and cache invalidation before distributing a candidate.
 5. Benchmark complete engine-ready time separately from partial phase timings and manual user wait.
 
-Initial targets are Windows x64 MT DX11 and DX11-AVX. No compatibility claim is made for other renderers. There is no release to install yet.
+Initial targets are Windows x64 MT DX11 and DX11-AVX. No compatibility claim is made for other renderers. The [first compile artifact](docs/load-transitions/BUILD_2026-10-16.md) is available for an initial [in-game smoke test](docs/load-transitions/SMOKE_TEST.md); it is not a stable release.
 
 ## Benchmark tooling
 

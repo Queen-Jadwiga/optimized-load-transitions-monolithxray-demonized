@@ -31,15 +31,16 @@ Original authorship and merge ancestry are retained.
 
 ## Verification
 
-The three Python log-analysis tests pass locally. The Windows workflow additionally
-tests actual executor lifecycle behavior with PPL: nested batches, exception
-propagation/recovery, cancellation joining active captures, and stale-generation
-rejection/replacement. Windows executor tests passed on commit `ec0f2798d9a972a83f93c08d50a0d430fd3d57e3`
-([run 2](https://github.com/Queen-Jadwiga/optimized-load-transitions-monolithxray-demonized/actions/runs/38966012260)).
-The first full build caught a private queue method accessed by the new reload
-path; its declaration is now public. Full compilation and runtime validation
-remain pending. No measured performance improvement is claimed. The PR
-is a large experimental change: integration does not establish thread safety.
+The three Python log-analysis tests and the Windows executor lifecycle tests
+passed on compiled commit `6b791e720fc1e7ad415c8aaf5638722b4e936ac3`. The full
+Windows x64 DX11-AVX solution build succeeded with zero errors. See the
+[build record](BUILD_2026-10-16.md) for warnings, hashes, artifact IDs and evidence.
+The initial compile caught a private queue method accessed by the new reload
+path; the final revision exposes that method through the public interface.
+
+No measured performance improvement is claimed. The PR is a large experimental
+change: integration and executor tests do not establish renderer thread safety
+or runtime compatibility. In-game validation remains pending.
 
 Automatic builds of this experimental branch target DX11-AVX, with compile logs,
 symbols and executable hashes retained for 14 days. Manual DX11 builds are also

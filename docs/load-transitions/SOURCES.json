@@ -13,6 +13,13 @@
   "merge_base": "3cb176018bc16a8b7911fe42157a15e2b6c520cc",
   "review_date": "2026-10-16",
   "engine_changes_on_main": false,
-  "windows_build_verified": false,
-  "runtime_verified": false
+  "windows_build_verified": true,
+  "runtime_verified": false,
+  "experimental_branch": "experimental/pr614-oct11",
+  "windows_build_verified_commit": "6b791e720fc1e7ad415c8aaf5638722b4e936ac3",
+  "windows_build_configuration": "DX11-AVX",
+  "windows_build_run": "https://github.com/Queen-Jadwiga/optimized-load-transitions-monolithxray-demonized/actions/runs/38966296032",
+  "windows_executor_tests_passed": true,
+  "executable_sha256": "8445ece5dd3ded3ed6441aa13759dcd8a88c6e2e7aada18c06f613ecf4bd8af0",
+  "performance_measured": false
 }
